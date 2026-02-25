@@ -2,6 +2,9 @@
 .vscode/
 mainPy/info/
 mainPy/build/
+ex_config.json
+ex_userInfo.json
+ex_webInfo.json
 # 忽略 Python 编译文件
 __pycache__/
 *.pyc
