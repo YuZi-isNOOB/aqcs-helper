@@ -20,3 +20,4 @@ env/
 Thumbs.db
 *.ini
 *.spec
+*.lock

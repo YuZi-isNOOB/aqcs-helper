@@ -7,6 +7,8 @@ import time
 import os
 import json
 import random
+import sys
+import msvcrt
 
 # ================= HTTP协程 =================
 class HttpClientAsync:
@@ -1067,12 +1069,39 @@ async def run_one_account(acc, mainAccount, url, path, headers, ismainfun = True
                 await client.enter_main_hut(send, mainAccount, account, 1) # 加亲密度5min一次30（每天2次）
     await client.close()
 def get_user_info(path):
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    INFO_DIR = os.path.join(BASE_DIR, "info")
-    template_path = os.path.join(INFO_DIR, "ex_" + path)
+    """
+    返回 info 文件夹下的完整路径。
+    假设 info 文件夹与 exe 同级。
+    """
+    if getattr(sys, 'frozen', False):
+        # exe 打包后，用 exe 所在目录
+        base_dir = os.path.dirname(sys.executable)
+    else:
+        # 本地运行，用脚本目录
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+
+    info_dir = os.path.join(base_dir, "info")
+    template_path = os.path.join(info_dir, "ex_" + path)
     if os.path.exists(template_path):
         return template_path
-    return os.path.join(INFO_DIR, path)
+    return os.path.join(info_dir, path)
+def single_instance():
+    """
+    确保程序只能运行一个实例。
+    返回文件对象，如果 None 说明已有实例运行。
+    """
+    lock_file_path = os.path.join(os.path.dirname(sys.executable), "program.lock")
+
+    # 打开或创建锁文件
+    fp = open(lock_file_path, "w")
+    try:
+        # 尝试加锁
+        msvcrt.locking(fp.fileno(), msvcrt.LK_NBLCK, 1)
+        return fp  # 返回锁文件对象，程序退出前保持打开
+    except IOError:
+        # 锁失败，说明已有实例运行
+        return None
+
 # -------------------------
 # 测试入口
 # -------------------------
@@ -1110,4 +1139,19 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # -------------------------
+    # 单实例检测
+    # -------------------------
+    lock_fp = single_instance()
+    if not lock_fp:
+        print("程序已经在运行中！")
+        sys.exit(0)
+
+    # -------------------------
+    # 异步主函数
+    # -------------------------
+    try:
+        asyncio.run(main())
+    finally:
+        # 程序退出前释放锁
+        lock_fp.close()
