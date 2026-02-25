@@ -1,0 +1,17 @@
+# 忽略 VS Code 工作区设置
+.vscode/
+mainPy/info/
+# 忽略 Python 编译文件
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 忽略虚拟环境文件夹
+venv/
+env/
+
+# 忽略系统文件
+.DS_Store
+Thumbs.db
+*.ini
