@@ -1,4 +1,4 @@
-# 奥奇传说页游
+# 奥奇传说页游-HELPER
 奥奇传说多进程helper，抛弃flash网页操作，直接通过网络层发送命令，给服务器发送socket数据包，从而模拟按钮操作等~
 
 ## 优势：
@@ -120,3 +120,4 @@
 
 
 ![License](https://img.shields.io/badge/license-MIT-brightgreen)
+
