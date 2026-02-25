@@ -1111,7 +1111,7 @@ async def main():
     userinfo = load_config(get_user_info("userInfo.json"))
     accounts = userinfo["accounts"]
     webinfo = load_config(get_user_info("webInfo.json"))
-    ismainfun = False # 刷亲密度测试（未完善）
+    ismainfun = True # 刷亲密度测试（未完善）
     sametimeloginnumber = 5
     # 限制最多 60 个
     if len(accounts) > 60:
