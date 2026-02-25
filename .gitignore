@@ -1,6 +1,7 @@
 # 忽略 VS Code 工作区设置
 .vscode/
 mainPy/info/
+mainPy/build/
 # 忽略 Python 编译文件
 __pycache__/
 *.pyc
@@ -15,3 +16,4 @@ env/
 .DS_Store
 Thumbs.db
 *.ini
+*.spec
