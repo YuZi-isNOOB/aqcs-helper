@@ -9,6 +9,8 @@ import json
 import random
 import sys
 import msvcrt
+import traceback
+from datetime import datetime
 
 # ================= HTTP协程 =================
 class HttpClientAsync:
@@ -1070,27 +1072,82 @@ async def run_one_account(acc, mainAccount, url, path, headers, ismainfun = True
     await client.close()
 def get_user_info(path):
     """
-    返回 info 文件夹下的完整路径。
-    假设 info 文件夹与 exe 同级。
+    info 文件夹下配置文件路径规则：
+    1. userInfo.json：
+       - 优先用 info/userInfo.json
+       - 不存在则用 info/ex_userInfo.json
+    2. 其他文件：
+       - 优先用 info/ex_xxx.json
+       - 不存在则用 info/xxx.json
     """
+
+    # exe 或 脚本目录
     if getattr(sys, 'frozen', False):
-        # exe 打包后，用 exe 所在目录
         base_dir = os.path.dirname(sys.executable)
     else:
-        # 本地运行，用脚本目录
         base_dir = os.path.dirname(os.path.abspath(__file__))
 
     info_dir = os.path.join(base_dir, "info")
+
+    # ===== userInfo.json 特殊规则 =====
+    if path == "userInfo.json":
+        template_path = os.path.join(info_dir, "ex_" + path)
+
+        if os.path.exists(template_path):
+            return template_path
+        else:
+            return ensure_userinfo()
+
+    # ===== 其他配置文件规则 =====
     template_path = os.path.join(info_dir, "ex_" + path)
     if os.path.exists(template_path):
         return template_path
+
     return os.path.join(info_dir, path)
+def ensure_userinfo() -> str:
+    """
+    如果 ex_userInfo.json 不存在，则搜索 info/userInfo.json。
+    如果不存在，则创建一个带默认账户的 userInfo.json。
+    返回 userInfo.json 的完整路径。
+    """
+    # 获取 exe 所在目录
+    exe_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+
+    # 构造 info 文件夹路径和 userInfo.json 路径
+    info_dir = os.path.join(exe_dir, "info")
+    userinfo_file = os.path.join(info_dir, "userInfo.json")
+
+    # 确保 info 文件夹存在
+    os.makedirs(info_dir, exist_ok=True)
+
+    # 如果 userInfo.json 不存在，则创建默认内容
+    if not os.path.exists(userinfo_file):
+        default_data = {"accounts": []}
+
+        # 生成 25 个 id=1
+        default_data["accounts"].extend([{"account": "xxx", "password": "xxx", "id": 1} for _ in range(25)])
+        # 生成 1 个 id=2
+        default_data["accounts"].append({"account": "xxx", "password": "xxx", "id": 2})
+        # 生成 19 个 id=3
+        default_data["accounts"].extend([{"account": "xxx", "password": "xxx", "id": 3} for _ in range(19)])
+        # 生成 1 个 id=4
+        default_data["accounts"].append({"account": "xxx", "password": "xxx", "id": 4})
+        # 生成 14 个 id=5
+        default_data["accounts"].extend([{"account": "xxx", "password": "xxx", "id": 5} for _ in range(14)])
+
+        # 写入 JSON 文件
+        with open(userinfo_file, "w", encoding="utf-8") as f:
+            json.dump(default_data, f, indent=4, ensure_ascii=False)
+
+    return userinfo_file
 def single_instance():
     """
     确保程序只能运行一个实例。
-    返回文件对象，如果 None 说明已有实例运行。
+    返回锁文件对象，如果 None 说明已有实例运行。
     """
-    lock_file_path = os.path.join(os.path.dirname(sys.executable), "program.lock")
+    # 获取程序目录（兼容打包后的 exe 和 .py）
+    exe_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+    lock_file_path = os.path.join(exe_dir, "program.lock")
 
     # 打开或创建锁文件
     fp = open(lock_file_path, "w")
@@ -1100,7 +1157,34 @@ def single_instance():
         return fp  # 返回锁文件对象，程序退出前保持打开
     except IOError:
         # 锁失败，说明已有实例运行
+        fp.close()
         return None
+def setup_log_file():
+    # 获取 exe 所在目录
+    exe_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+
+    # 构造 logs 文件夹路径和 error.log 路径
+    log_dir = os.path.join(exe_dir, "logs")
+    log_file = os.path.join(log_dir, "error.log")
+
+    # 检查 logs 文件夹是否存在，没有就创建
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir, exist_ok=True)
+
+    # 检查 error.log 是否存在，没有就创建一个空文件
+    if not os.path.exists(log_file):
+        with open(log_file, "w", encoding="utf-8") as f:
+            f.write("")  # 创建空日志文件
+
+    print(f"日志文件路径: {log_file}")
+    return log_file
+def log_exception(e: Exception):
+    log_file = setup_log_file()
+    with open(log_file, "a", encoding="utf-8") as f:
+        f.write(f"\n[{datetime.now()}] Exception:\n")
+        traceback.print_exception(type(e), e, e.__traceback__, file=f)
+        f.write("\n" + "-"*50 + "\n")
+    print(f"Exception caught. See log: {log_file}")
 
 # -------------------------
 # 测试入口
@@ -1152,6 +1236,11 @@ if __name__ == "__main__":
     # -------------------------
     try:
         asyncio.run(main())
+        input("按回车退出程序...")
+    except Exception as e:
+        # 捕获所有异常，不退出，写日志
+        log_exception(e)
+        input("按回车退出程序...")
     finally:
         # 程序退出前释放锁
         lock_fp.close()
