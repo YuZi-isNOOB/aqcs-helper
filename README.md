@@ -112,7 +112,7 @@
 
 ```ruby
 {
-    "account": "xxx",   # 你的小号用户名
+    "account": "xxx",   # 你的小号的账号
     "password": "xxx",  # 你的小号的密码
     "id": 1             # 账号标识
 }
@@ -120,4 +120,5 @@
 
 
 ![License](https://img.shields.io/badge/license-MIT-brightgreen)
+
 
