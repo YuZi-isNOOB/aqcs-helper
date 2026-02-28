@@ -22,3 +22,4 @@ Thumbs.db
 *.spec
 *.lock
 *.xml
+error.log

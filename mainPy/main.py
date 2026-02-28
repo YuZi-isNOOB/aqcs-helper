@@ -112,7 +112,61 @@ class ReadLoginBack:
         self.result[str4] = self.read_asmess()
         return self.result
     
+class ReadServerBack:
+    def parse_lvc_fields_ascii(self, data: bytes) -> dict:
+        """
+        从数据中找到以 076c7631 开头的字段开始解析 lv 字段
+        """
+        hex_prefix = b'\x07\x6c\x76\x31\x07\x6c\x76\x30\x07\x6c\x76\x33'  # 076c7631 对应的 bytes
+        start_idx = data.find(hex_prefix)
+        if start_idx == -1:
+            # 找不到就返回空字典
+            return {}
 
+        clean_data = data[start_idx:]  # 从找到的位置开始
+        result = {}
+        # print(clean_data[0:1])
+
+        i = 0
+        j = 0
+        while i < len(clean_data):
+            if clean_data[i:i+1] == b'\x06' :
+                next = (int.from_bytes(clean_data[i+1:i+2], byteorder='big'))//2
+                
+                field_name = clean_data[i+2:i+next+2].decode('ascii')
+                if field_name != "1008_20220603_swa_0_1":
+                    # 方法：先按 # 分割，再按 : 取第一个数字
+                    numbers = [int(item.split(':')[0]) for item in field_name.split('#') if int(item.split(':')[0]) != -1]
+
+                    # print(numbers)  # 输出 [7, 8, 9, 10, 11, 12, 13]
+                    result[list(result.keys())[j]] = numbers
+                else:
+                    result[list(result.keys())[j]] = field_name
+                # print(result)
+                next += 2
+                i += next
+                
+                j += 1
+                # if j == 11:
+                #     break
+            elif clean_data[i:i+1] == b'\x04':
+                field_name = int.from_bytes(clean_data[i+1:i+2], byteorder='big')
+                result[list(result.keys())[j]] = field_name
+                # print(result)
+                i += 2
+                j += 1
+                # break
+            else:
+                # print(i)
+                next = (int.from_bytes(clean_data[i:i+1], byteorder='big'))//2
+                field_name = clean_data[i+1:i+next+1].decode('ascii')
+                result[field_name] = None
+                # print(result)
+                next += 1
+                i += next
+            
+        return result 
+    
 # ================= Socket Client =================
 class FlashClientAsync:
     def __init__(self, ip, port):
@@ -297,12 +351,19 @@ class FlashClientAsync:
             "param": {'ci': 2}
         }))
         await asyncio.sleep(t) # 登录1钻石+15
+
+        await self.send_bytes(send.sendXtMessage(-1, {
+            "id": 1008,
+            "cmd": "1008_20250613_nzymj5",
+            "param": {'an': 1, 'ty': 0}
+        }))
+        await asyncio.sleep(t) # 每日竞猜一次+30(新版-简单)
         await self.send_bytes(send.sendXtMessage(-1, {
             "id": 1008,
             "cmd": "1008_20250613_nzymj5",
             "param": {'an': 1}
         }))
-        await asyncio.sleep(t) # 每日竞猜一次+30
+        await asyncio.sleep(t) # 每日竞猜一次+30（不知道还有没有用，先留着）
         await self.send_bytes(send.sendXtMessage(-1, {
             "id": 1008,
             "cmd": "1008_20250613_nzymj1",
@@ -349,24 +410,48 @@ class FlashClientAsync:
                 "cmd": "2_36_1",
                 "param": {}
             }))
-            await asyncio.sleep(t) # 每日1次源兽捕捉+15
+            # await asyncio.sleep(t) # 每日1次源兽捕捉+15
             match_hex_ys = "05636305626305616307766f6b0963636c74095f636d640762786c07777074096e627074057763057774057463"
             match_bytes_ys = bytes.fromhex(match_hex_ys)
             packet_ys = await self.listen_raw(match_bytes_ys, 20)
             countys += 1
             if (packet_ys is None):
                 print("未收到源兽捕捉返回包，可能是连接问题，停止监听")
-                return
+                continue
             freetime_ys = int(packet_ys[-1])
             print(f"源兽捕捉完成：{freetime_ys}次")
             if (freetime_ys != 0):
                 break
             await self.send_bytes(send.sendXtMessage(-1, {
                 "id": 2,
-                "cmd": "2_36_8",
-                "param": {'ci': 4}
+                "cmd": "2_36_2",
+                "param": {}
             }))
             await asyncio.sleep(t) # 每日1次源兽捕捉+15
+            uid = 0
+            while uid < 45:
+                # print(uid)
+                await self.send_bytes(send.sendXtMessage(-1, {
+                    "id": 2,
+                    "cmd": "2_36_3",
+                    "param": {'uid': uid}
+                }))
+                # 监听收包
+                match_hex_ys_79 = "325f33365f33"
+                match_bytes_ys_79 = bytes.fromhex(match_hex_ys_79)
+                packet_ys_79 = await self.listen_raw(match_bytes_ys_79, 3)
+                # print(packet_ys_79)
+                uid += 1
+                # if (packet_ys_79 is None):
+                #     print("3秒内未收到回包")
+                #     continue
+                await asyncio.sleep(1)
+            await self.send_bytes(send.sendXtMessage(-1, {
+                "id": 2,
+                "cmd": "2_36_4",
+                "param": {'ci': 5}
+            }))
+            await asyncio.sleep(t)
         
         count = 0
         while count < 5:
@@ -375,7 +460,7 @@ class FlashClientAsync:
                 "cmd": "1008_20220603_swa_0_0",
                 "param": {}
             }))
-            await asyncio.sleep(t) # 每日1次星轮探险+15
+            # await asyncio.sleep(t) # 每日1次星轮探险+15
             match_hex = "0764677407777470037207766f6b07776774095f636d64"
             match_bytes = bytes.fromhex(match_hex)
             packet = await self.listen_raw(match_bytes, 20)
@@ -390,10 +475,51 @@ class FlashClientAsync:
                 break
             await self.send_bytes(send.sendXtMessage(-1, {
                 "id": 1008,
-                "cmd": "1008_20220603_swa_0_3",
-                "param": {'ci': 2}
+                "cmd": "1008_20220603_swa_0_1",
+                "param": {'ci': 6}
             }))
-            await asyncio.sleep(t) # 每日1次星轮探险+15
+            # 每日1次星轮探险+15
+            match_hex_lv = "313030385f32303232303630335f7377615f305f31"
+            match_bytes_lv = bytes.fromhex(match_hex_lv)
+            packet_lv = await self.listen_raw(match_bytes_lv, 10)
+            if (packet_lv is None):
+                print(f"{count}次未收到星轮探险lv返回包，可能是连接问题，没关系，小号只需做任务")
+                continue
+            infoReader =  ReadServerBack()
+            ids = infoReader.parse_lvc_fields_ascii(packet_lv)
+            # print(f"原始包{packet_lv}")
+            # print(f"解析完成：{ids}")
+            chunks = [
+                {'dhp': 0, 'ids': ids["lv0"], 'isEnd': False, 'nr': False, 'ci': 6},
+                {'dhp': 0, 'ids': ids["lv1"], 'isEnd': False, 'nr': False, 'ci': 6},
+                {'dhp': 0, 'ids': ids["lv2"], 'isEnd': False, 'nr': False, 'ci': 6},
+                {'dhp': 0, 'ids': ids["lv3"], 'isEnd': False, 'nr': False, 'ci': 6},
+                {'dhp': 0, 'ids': ids["lv4"], 'isEnd': False, 'nr': False, 'ci': 6},
+                {'dhp': 0, 'ids': ids["lv5"], 'isEnd': False, 'nr': False, 'ci': 6},
+                {'dhp': 0, 'ids': ids["lv6"], 'isEnd': False, 'nr': False, 'ci': 6},
+                {'dhp': 0, 'ids': ids["lv7"], 'isEnd': False, 'nr': False, 'ci': 6},
+                {'dhp': 0, 'ids': ids["lv8"], 'isEnd': False, 'nr': False, 'ci': 6},
+                {'dhp': 0, 'ids': ids["lv9"], 'isEnd': False, 'nr': False, 'ci': 6},
+                {'dhp': 0, 'ids': ids["lv10"], 'isEnd': False, 'nr': False, 'ci': 6},
+                {'dhp': 0, 'ids': ids["lv11"], 'isEnd': False, 'nr': False, 'ci': 6},
+                {'dhp': 0, 'ids': ids["lv12"], 'isEnd': False, 'nr': False, 'ci': 6},
+                {'dhp': 0, 'ids': ids["lv13"], 'isEnd': False, 'nr': False, 'ci': 6},
+                {'dhp': 200, 'ids': [ids["lv13"][-1] + 1], 'isEnd': False, 'nr': False, 'ci': 6}
+            ] # 要修改先监听数据包再生成chunks
+            for item in chunks:
+                await self.send_bytes(send.sendXtMessage(-1, {
+                    "id": 1008,
+                    "cmd": "1008_20220603_swa_0_2",
+                    "param": item
+                }))
+                # 监听收包
+                match_hex_ys_swa_0_2 = "313030385f32303232303630335f7377615f305f32"
+                match_bytes_ys_swa_0_2 = bytes.fromhex(match_hex_ys_swa_0_2)
+                reback = await self.listen_raw(match_bytes_ys_swa_0_2, 2)
+                # print(item)
+                # print(reback)
+                await asyncio.sleep(t) # 每日1次星轮探险+15
+
         await self.send_bytes(send.sendXtMessage(-1, {
             "id": 1008,
             "cmd": "1008_20170623_dt_1",
@@ -731,6 +857,9 @@ class SendMessage:
 
         elif isinstance(obj, (bytes, bytearray)):
             self.writeAMFByteArray(obj)
+        
+        elif isinstance(obj, (list, tuple)):        # 新增支持List
+            self.writeAMFArray(obj)
 
         else:
             raise TypeError("unsupported type: " + str(type(obj)))
@@ -770,7 +899,19 @@ class SendMessage:
     def writeAMFDouble(self, v):
         self.writeByte(0x05)  # double marker
         self.buf += struct.pack(">d", float(v))
+    def writeAMFArray(self, arr):
+        # Array marker
+        self.writeByte(0x09)
 
+        # inline + dense length
+        self.writeU29((len(arr) << 1) | 1)
+
+        # 关联数组部分结束：写“空 key”（utf8-vr）
+        self.writeU29(1)   # 相当于空字符串 ""
+
+        # 普通数组
+        for item in arr:
+            self.writeObject(item)
     def writeU29(self, v):
         if v < 0x80:
             self.writeByte(v)
