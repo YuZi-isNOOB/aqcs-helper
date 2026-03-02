@@ -1263,7 +1263,10 @@ def ensure_userinfo() -> str:
 
     # 如果 userInfo.json 不存在，则创建默认内容
     if not os.path.exists(userinfo_file):
-        default_data = {"accounts": []}
+        default_data = {
+            "mainaccount":"xxx",
+            "accounts": []
+            }
 
         # 生成 25 个 id=1
         default_data["accounts"].extend([{"account": "xxx", "password": "xxx", "id": 1} for _ in range(25)])
