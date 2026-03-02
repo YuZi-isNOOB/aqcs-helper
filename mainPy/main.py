@@ -1357,7 +1357,7 @@ async def main():
 
     async def sem_run(acc):
         async with sem:
-            await run_one_account(acc, webinfo["mainaccount"], webinfo["url"], webinfo["path"], headers, ismainfun)
+            await run_one_account(acc, userinfo["mainaccount"], webinfo["url"], webinfo["path"], headers, ismainfun)
 
     tasks = [asyncio.create_task(sem_run(acc)) for acc in accounts]
     await asyncio.gather(*tasks)
