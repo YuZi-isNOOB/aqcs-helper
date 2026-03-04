@@ -343,7 +343,7 @@ class FlashClientAsync:
             "param": {'ec': 1, 'ci': 2, 'gid': 18}
         }))
         await asyncio.sleep(t)
-    async def daily(self, send, delay = 0.3):
+    async def daily(self, send, account, delay = 0.3):
         t = random.uniform(delay, 1.5)
         await self.send_bytes(send.sendXtMessage(-1, {
             "id": 1008,
@@ -418,6 +418,11 @@ class FlashClientAsync:
             if (packet_ys is None):
                 print("未收到源兽捕捉返回包，可能是连接问题，停止监听")
                 continue
+            totaltime_ys = int(packet_ys[-5])
+            print(f"源兽捕捉每周剩余次数：{12 - totaltime_ys}次（总12次）")
+            if (12 - totaltime_ys <= 0):
+                print(f"未完成源兽捕捉，活跃度不满100，请手动登录该账号：{account}")
+                break # 先检查源兽捕捉是否还有每周次数
             freetime_ys = int(packet_ys[-1])
             print(f"源兽捕捉完成：{freetime_ys}次")
             if (freetime_ys != 0):
@@ -469,6 +474,11 @@ class FlashClientAsync:
                 print(f"{count}次未收到星轮探险返回包，可能是连接问题，停止监听")
                 continue
             idx = packet.find(match_bytes)
+            totaltime = int(packet[idx + len(match_bytes) + 9])
+            print(f"星际探险每周剩余次数：{8 - totaltime}次（总8次）")
+            if (8 - totaltime <= 0):
+                print(f"未完成星际探险，活跃度不满100，请手动登录该账号：{account}")
+                break # 先检查源兽捕捉是否还有每周次数
             freetime = int(packet[idx + len(match_bytes) + 1])
             print(f"星轮探险完成：{freetime}次")
             if (freetime != 0):
@@ -1204,7 +1214,7 @@ async def run_one_account(acc, mainAccount, url, path, headers, ismainfun = True
                 await client.intimacy(send, mainAccount, 1)
 
             await client.alliance_daily(send, 1)
-            await client.daily(send, 1)
+            await client.daily(send, account, 1)
             await asyncio.sleep(10)
         else:
             if sign == 1:
