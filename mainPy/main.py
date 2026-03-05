@@ -420,13 +420,14 @@ class FlashClientAsync:
                 continue
             totaltime_ys = int(packet_ys[-5])
             print(f"源兽捕捉每周剩余次数：{12 - totaltime_ys}次（总12次）")
+            freetime_ys = int(packet_ys[-1])
+            print(f"源兽捕捉今日完成：{freetime_ys}次")
+            if (freetime_ys != 0):
+                break
             if (12 - totaltime_ys <= 0):
                 print(f"未完成源兽捕捉，活跃度不满100，请手动登录该账号：{account}")
                 break # 先检查源兽捕捉是否还有每周次数
-            freetime_ys = int(packet_ys[-1])
-            print(f"源兽捕捉完成：{freetime_ys}次")
-            if (freetime_ys != 0):
-                break
+            
             await self.send_bytes(send.sendXtMessage(-1, {
                 "id": 2,
                 "cmd": "2_36_2",
@@ -476,13 +477,15 @@ class FlashClientAsync:
             idx = packet.find(match_bytes)
             totaltime = int(packet[idx + len(match_bytes) + 9])
             print(f"星际探险每周剩余次数：{8 - totaltime}次（总8次）")
+            freetime = int(packet[idx + len(match_bytes) + 1])
+            print(f"星轮探险今日完成：{freetime}次")
+            if (freetime != 0):
+                break
             if (8 - totaltime <= 0):
                 print(f"未完成星际探险，活跃度不满100，请手动登录该账号：{account}")
                 break # 先检查源兽捕捉是否还有每周次数
-            freetime = int(packet[idx + len(match_bytes) + 1])
-            print(f"星轮探险完成：{freetime}次")
-            if (freetime != 0):
-                break
+            
+            
             await self.send_bytes(send.sendXtMessage(-1, {
                 "id": 1008,
                 "cmd": "1008_20220603_swa_0_1",
