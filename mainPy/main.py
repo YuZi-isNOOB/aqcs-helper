@@ -411,53 +411,68 @@ class FlashClientAsync:
                 "param": {}
             }))
             # await asyncio.sleep(t) # 每日1次源兽捕捉+15
-            match_hex_ys = "05636305626305616307766f6b0963636c74095f636d640762786c07777074096e627074057763057774057463"
+            match_hex_ys = "05636307766f6b03740963636c74095f636d640762786c07777074096e627074057774"
             match_bytes_ys = bytes.fromhex(match_hex_ys)
             packet_ys = await self.listen_raw(match_bytes_ys, 20)
             countys += 1
             if (packet_ys is None):
                 print("未收到源兽捕捉返回包，可能是连接问题，停止监听")
                 continue
-            totaltime_ys = int(packet_ys[-5])
-            print(f"源兽捕捉每周剩余次数：{12 - totaltime_ys}次（总12次）")
-            freetime_ys = int(packet_ys[-1])
-            print(f"源兽捕捉今日完成：{freetime_ys}次")
-            if (freetime_ys != 0):
+            totaltime_ys = int(packet_ys[-19])
+            print(f"源兽捕捉剩余次数：{totaltime_ys}次")
+            freetime_ys = int(packet_ys[-17])
+            print(f"源兽捕捉本周完成：{freetime_ys}次")
+            if totaltime_ys <= 0:
                 break
-            if (12 - totaltime_ys <= 0):
-                print(f"未完成源兽捕捉，活跃度不满100，请手动登录该账号：{account}")
-                break # 先检查源兽捕捉是否还有每周次数
-            
-            await self.send_bytes(send.sendXtMessage(-1, {
-                "id": 2,
-                "cmd": "2_36_2",
-                "param": {}
-            }))
-            await asyncio.sleep(t) # 每日1次源兽捕捉+15
-            uid = 0
-            while uid < 45:
-                # print(uid)
+            await asyncio.sleep(t)
+            time_ys = totaltime_ys
+            while time_ys > 0:
+                print(f"还有{time_ys}次")
+                if (freetime_ys >= 2):
+                    print(f"源兽扫荡第{freetime_ys - 2}次")
+                    await self.send_bytes(send.sendXtMessage(-1, {
+                        "id": 2,
+                        "cmd": "2_36_8",
+                        "param": {'ci': 2}
+                    }))
+                    await asyncio.sleep(t) # 每日源兽捕捉,普通用户扫荡
+                    time_ys -= 1
+                    freetime_ys += 1
+                    continue
+                
+                # 不是扫荡
+                print("开始源兽捕捉")
                 await self.send_bytes(send.sendXtMessage(-1, {
                     "id": 2,
-                    "cmd": "2_36_3",
-                    "param": {'uid': uid}
+                    "cmd": "2_36_2",
+                    "param": {}
                 }))
-                # 监听收包
-                match_hex_ys_79 = "325f33365f33"
-                match_bytes_ys_79 = bytes.fromhex(match_hex_ys_79)
-                packet_ys_79 = await self.listen_raw(match_bytes_ys_79, 3)
-                # print(packet_ys_79)
-                uid += 1
-                # if (packet_ys_79 is None):
-                #     print("3秒内未收到回包")
-                #     continue
-                await asyncio.sleep(1)
-            await self.send_bytes(send.sendXtMessage(-1, {
-                "id": 2,
-                "cmd": "2_36_4",
-                "param": {'ci': 5}
-            }))
-            await asyncio.sleep(t)
+                await asyncio.sleep(t) # 每日1次源兽捕捉+15
+                freetime_ys += 1
+                uid = 0
+                while uid < 45:
+                    # print(uid)
+                    await self.send_bytes(send.sendXtMessage(-1, {
+                        "id": 2,
+                        "cmd": "2_36_3",
+                        "param": {'uid': uid}
+                    }))
+                    # 监听收包
+                    match_hex_ys_79 = "325f33365f33"
+                    match_bytes_ys_79 = bytes.fromhex(match_hex_ys_79)
+                    packet_ys_79 = await self.listen_raw(match_bytes_ys_79, 3)
+                    # print(packet_ys_79)
+                    uid += 1
+                    # if (packet_ys_79 is None):
+                    #     print("3秒内未收到回包")
+                    #     continue
+                    await asyncio.sleep(1)
+                await self.send_bytes(send.sendXtMessage(-1, {
+                    "id": 2,
+                    "cmd": "2_36_4",
+                    "param": {'ci': 5}
+                }))
+                await asyncio.sleep(t)
         
         count = 0
         while count < 5:
