@@ -448,6 +448,7 @@ class FlashClientAsync:
                     "param": {}
                 }))
                 await asyncio.sleep(t) # 每日1次源兽捕捉+15
+                time_ys -= 1
                 freetime_ys += 1
                 uid = 0
                 while uid < 45:
