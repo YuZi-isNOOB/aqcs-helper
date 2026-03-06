@@ -429,7 +429,7 @@ class FlashClientAsync:
             while time_ys > 0:
                 print(f"还有{time_ys}次")
                 if (freetime_ys >= 2):
-                    print(f"源兽扫荡第{freetime_ys - 2}次")
+                    print(f"源兽扫荡第{freetime_ys - 1}次")
                     await self.send_bytes(send.sendXtMessage(-1, {
                         "id": 2,
                         "cmd": "2_36_8",
