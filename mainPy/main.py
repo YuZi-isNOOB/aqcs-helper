@@ -1311,7 +1311,7 @@ def ensure_userinfo() -> str:
         # 写入 JSON 文件
         with open(userinfo_file, "w", encoding="utf-8") as f:
             json.dump(default_data, f, indent=4, ensure_ascii=False)
-
+        print("初始化完成")
     return userinfo_file
 def single_instance():
     """
@@ -1367,6 +1367,7 @@ async def main():
     headers = config["default_headers"]
     userinfo = load_config(get_user_info("userInfo.json"))
     accounts = userinfo["accounts"]
+    accounts = [acc for acc in accounts if acc.get("account") != "xxx"]
     webinfo = load_config(get_user_info("webInfo.json"))
     ismainfun = True # 刷亲密度测试（未完善）
     sametimeloginnumber = 5
