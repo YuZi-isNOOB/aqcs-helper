@@ -84,8 +84,6 @@
 
 ![image](https://github.com/YuZi-isNOOB/aqcs-helper/blob/main/img/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202026-02-25%20195505.png)
 
-![image](https://github.com/YuZi-isNOOB/aqcs-helper/blob/main/img/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202026-02-25%20195714.png)
-
 ## 60养1计算方式
 
 1个大号（vip）加25个亲密好友，大号每周领取5×7=35次，每个小号每周产出1个，多出来的一个人没办法，创建一个联盟或者加入一个联盟.
