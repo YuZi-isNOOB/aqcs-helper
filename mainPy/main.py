@@ -427,7 +427,7 @@ class FlashClientAsync:
             await asyncio.sleep(t)
             time_ys = totaltime_ys
             while time_ys > 0:
-                print(f"还有{time_ys}次")
+                print(f"源兽捕捉还有{time_ys}次")
                 if (freetime_ys >= 2):
                     print(f"源兽扫荡第{freetime_ys - 1}次")
                     await self.send_bytes(send.sendXtMessage(-1, {
@@ -483,7 +483,7 @@ class FlashClientAsync:
                 "param": {}
             }))
             # await asyncio.sleep(t) # 每日1次星轮探险+15
-            match_hex = "0764677407777470037207766f6b07776774095f636d64"
+            match_hex = "07777470037205746907776774095f636d64" # 判断接收包的信息
             match_bytes = bytes.fromhex(match_hex)
             packet = await self.listen_raw(match_bytes, 20)
             count += 1
@@ -491,63 +491,77 @@ class FlashClientAsync:
                 print(f"{count}次未收到星轮探险返回包，可能是连接问题，停止监听")
                 continue
             idx = packet.find(match_bytes)
-            totaltime = int(packet[idx + len(match_bytes) + 9])
-            print(f"星际探险每周剩余次数：{8 - totaltime}次（总8次）")
-            freetime = int(packet[idx + len(match_bytes) + 1])
-            print(f"星轮探险今日完成：{freetime}次")
-            if (freetime != 0):
+            totaltime = int(packet[idx + len(match_bytes) + 5])
+            print(f"星轮探险剩余次数：{totaltime}次")
+            freetime = int(packet[idx + len(match_bytes) + 7])
+            print(f"星轮探险本周完成：{freetime}次")
+            if totaltime <= 0:
                 break
-            if (8 - totaltime <= 0):
-                print(f"未完成星际探险，活跃度不满100，请手动登录该账号：{account}")
-                break # 先检查源兽捕捉是否还有每周次数
-            
-            
-            await self.send_bytes(send.sendXtMessage(-1, {
-                "id": 1008,
-                "cmd": "1008_20220603_swa_0_1",
-                "param": {'ci': 6}
-            }))
-            # 每日1次星轮探险+15
-            match_hex_lv = "313030385f32303232303630335f7377615f305f31"
-            match_bytes_lv = bytes.fromhex(match_hex_lv)
-            packet_lv = await self.listen_raw(match_bytes_lv, 10)
-            if (packet_lv is None):
-                print(f"{count}次未收到星轮探险lv返回包，可能是连接问题，没关系，小号只需做任务")
-                continue
-            infoReader =  ReadServerBack()
-            ids = infoReader.parse_lvc_fields_ascii(packet_lv)
-            # print(f"原始包{packet_lv}")
-            # print(f"解析完成：{ids}")
-            chunks = [
-                {'dhp': 0, 'ids': ids["lv0"], 'isEnd': False, 'nr': False, 'ci': 6},
-                {'dhp': 0, 'ids': ids["lv1"], 'isEnd': False, 'nr': False, 'ci': 6},
-                {'dhp': 0, 'ids': ids["lv2"], 'isEnd': False, 'nr': False, 'ci': 6},
-                {'dhp': 0, 'ids': ids["lv3"], 'isEnd': False, 'nr': False, 'ci': 6},
-                {'dhp': 0, 'ids': ids["lv4"], 'isEnd': False, 'nr': False, 'ci': 6},
-                {'dhp': 0, 'ids': ids["lv5"], 'isEnd': False, 'nr': False, 'ci': 6},
-                {'dhp': 0, 'ids': ids["lv6"], 'isEnd': False, 'nr': False, 'ci': 6},
-                {'dhp': 0, 'ids': ids["lv7"], 'isEnd': False, 'nr': False, 'ci': 6},
-                {'dhp': 0, 'ids': ids["lv8"], 'isEnd': False, 'nr': False, 'ci': 6},
-                {'dhp': 0, 'ids': ids["lv9"], 'isEnd': False, 'nr': False, 'ci': 6},
-                {'dhp': 0, 'ids': ids["lv10"], 'isEnd': False, 'nr': False, 'ci': 6},
-                {'dhp': 0, 'ids': ids["lv11"], 'isEnd': False, 'nr': False, 'ci': 6},
-                {'dhp': 0, 'ids': ids["lv12"], 'isEnd': False, 'nr': False, 'ci': 6},
-                {'dhp': 0, 'ids': ids["lv13"], 'isEnd': False, 'nr': False, 'ci': 6},
-                {'dhp': 200, 'ids': [ids["lv13"][-1] + 1], 'isEnd': False, 'nr': False, 'ci': 6}
-            ] # 要修改先监听数据包再生成chunks
-            for item in chunks:
+            await asyncio.sleep(t)
+            time_xj = totaltime
+            while time_xj > 0:
+                print(f"星轮探险还有{time_xj}次")
+                if (freetime >= 2):
+                    print(f"星轮探险扫荡第{freetime - 1}次")
+                    await self.send_bytes(send.sendXtMessage(-1, {
+                        "id": 1008,
+                        "cmd": "1008_20220603_swa_0_3",
+                        "param": {'ci': 2}
+                    }))
+                    await asyncio.sleep(t) # 每日星轮探险,普通用户扫荡
+                    time_xj -= 1
+                    freetime += 1
+                    continue
+                # 不是扫荡
+                print("开始星轮探险")
                 await self.send_bytes(send.sendXtMessage(-1, {
                     "id": 1008,
-                    "cmd": "1008_20220603_swa_0_2",
-                    "param": item
+                    "cmd": "1008_20220603_swa_0_1",
+                    "param": {'ci': 6}
                 }))
-                # 监听收包
-                match_hex_ys_swa_0_2 = "313030385f32303232303630335f7377615f305f32"
-                match_bytes_ys_swa_0_2 = bytes.fromhex(match_hex_ys_swa_0_2)
-                reback = await self.listen_raw(match_bytes_ys_swa_0_2, 2)
-                # print(item)
-                # print(reback)
-                await asyncio.sleep(t) # 每日1次星轮探险+15
+                time_xj -= 1
+                freetime += 1
+                # 每日1次星轮探险+15
+                match_hex_lv = "313030385f32303232303630335f7377615f305f31"
+                match_bytes_lv = bytes.fromhex(match_hex_lv)
+                packet_lv = await self.listen_raw(match_bytes_lv, 10)
+                if (packet_lv is None):
+                    print(f"{count}次未收到星轮探险lv返回包，可能是连接问题，没关系，小号只需做任务")
+                    continue
+                infoReader =  ReadServerBack()
+                ids = infoReader.parse_lvc_fields_ascii(packet_lv)
+                # print(f"原始包{packet_lv}")
+                # print(f"解析完成：{ids}")
+                chunks = [
+                    {'dhp': 0, 'ids': ids["lv0"], 'isEnd': False, 'nr': False, 'ci': 6},
+                    {'dhp': 0, 'ids': ids["lv1"], 'isEnd': False, 'nr': False, 'ci': 6},
+                    {'dhp': 0, 'ids': ids["lv2"], 'isEnd': False, 'nr': False, 'ci': 6},
+                    {'dhp': 0, 'ids': ids["lv3"], 'isEnd': False, 'nr': False, 'ci': 6},
+                    {'dhp': 0, 'ids': ids["lv4"], 'isEnd': False, 'nr': False, 'ci': 6},
+                    {'dhp': 0, 'ids': ids["lv5"], 'isEnd': False, 'nr': False, 'ci': 6},
+                    {'dhp': 0, 'ids': ids["lv6"], 'isEnd': False, 'nr': False, 'ci': 6},
+                    {'dhp': 0, 'ids': ids["lv7"], 'isEnd': False, 'nr': False, 'ci': 6},
+                    {'dhp': 0, 'ids': ids["lv8"], 'isEnd': False, 'nr': False, 'ci': 6},
+                    {'dhp': 0, 'ids': ids["lv9"], 'isEnd': False, 'nr': False, 'ci': 6},
+                    {'dhp': 0, 'ids': ids["lv10"], 'isEnd': False, 'nr': False, 'ci': 6},
+                    {'dhp': 0, 'ids': ids["lv11"], 'isEnd': False, 'nr': False, 'ci': 6},
+                    {'dhp': 0, 'ids': ids["lv12"], 'isEnd': False, 'nr': False, 'ci': 6},
+                    {'dhp': 0, 'ids': ids["lv13"], 'isEnd': False, 'nr': False, 'ci': 6},
+                    {'dhp': 200, 'ids': [ids["lv13"][-1] + 1], 'isEnd': False, 'nr': False, 'ci': 6}
+                ] # 要修改先监听数据包再生成chunks
+                for item in chunks:
+                    await self.send_bytes(send.sendXtMessage(-1, {
+                        "id": 1008,
+                        "cmd": "1008_20220603_swa_0_2",
+                        "param": item
+                    }))
+                    # 监听收包
+                    match_hex_ys_swa_0_2 = "313030385f32303232303630335f7377615f305f32"
+                    match_bytes_ys_swa_0_2 = bytes.fromhex(match_hex_ys_swa_0_2)
+                    reback = await self.listen_raw(match_bytes_ys_swa_0_2, 2)
+                    # print(item)
+                    # print(reback)
+                    await asyncio.sleep(t) # 每日1次星轮探险+15
 
         await self.send_bytes(send.sendXtMessage(-1, {
             "id": 1008,
