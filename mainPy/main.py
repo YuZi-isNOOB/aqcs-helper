@@ -1144,7 +1144,7 @@ def load_config(path="config.json"):
 def md5_str(s: str) -> str:
     return hashlib.md5(s.encode('utf-8')).hexdigest()
 
-async def run_one_account(acc, mainAccount, url, path, headers, ismainfun = True):
+async def run_one_account(acc, mainAccount, url, path, headers, ismainfun = True, server_l = {}, isfirstLogin = False):
     account = acc["account"]
     password_plain = acc["password"]
     sign = acc["id"]
@@ -1169,44 +1169,49 @@ async def run_one_account(acc, mainAccount, url, path, headers, ismainfun = True
     if resp.get("c") != "ok":
         print(f"[x] 登录失败: {account}")
         return
-
     sid = resp["sid"]
-    # print(resp["zn"])
-    # 处理 IP 列表，只保留尾部 :0
-    ip_items = [i.strip() for i in resp["svr"].split(";") if i.strip()]
-    ip_list = []
+    # print(acc)
+    if ismainfun or isfirstLogin: # 如果是主要功能或者高级功能的第一次id=1的小号登录服务器
+        # 处理 IP 列表，只保留尾部 :0
+        ip_items = [i.strip() for i in resp["svr"].split(";") if i.strip()]
+        ip_list = []
 
-    for item in ip_items:
-        if item.endswith(":0"):  # 只保留尾部是 :0 的
-            parts = item.split(":")
-            ip_list.append({'ip': parts[0], 'port': parts[1]})
+        for item in ip_items:
+            if item.endswith(":0"):  # 只保留尾部是 :0 的
+                parts = item.split(":")
+                ip_list.append({'ip': parts[0], 'port': parts[1]})
 
-    # 处理 zone 列表
-    zn_items = [i.strip() for i in resp["zn"].split(";") if i.strip()]
-    combined = []
+        # 处理 zone 列表
+        zn_items = [i.strip() for i in resp["zn"].split(";") if i.strip()]
+        combined = []
 
-    for g in zn_items:
-        parts = g.split('/')
-        zone_name = parts[0]          
-        values = list(map(int, parts[1:]))
-        
-        # 排除 zone 名称里包含 'test'
-        if "test" in zone_name.lower():
-            continue
-        
-        index = values[0]             # 用第一个数字作为索引
-        if index < len(ip_list):      # 防止越界
-            ip_info = ip_list[index]
-            combined.append({
-                'zone': zone_name,
-                'values': values,
-                'ip': ip_info['ip'],
-                'port': ip_info['port']
-            })
+        for g in zn_items:
+            parts = g.split('/')
+            zone_name = parts[0]          
+            values = list(map(int, parts[1:]))
+            
+            # 排除 zone 名称里包含 'test'
+            if "test" in zone_name.lower():
+                continue
+            
+            index = values[0]             # 用第一个数字作为索引
+            if index < len(ip_list):      # 防止越界
+                ip_info = ip_list[index]
+                combined.append({
+                    'zone': zone_name,
+                    'values': values,
+                    'ip': ip_info['ip'],
+                    'port': ip_info['port']
+                })
 
-    # 输出结果
-    # print(combined)
-    one = random.choice(combined)
+        # 输出结果
+        # print(combined)
+        one = random.choice(combined)
+        # 判断是否需要记录服务器
+        if isfirstLogin:
+            return one
+    else:
+        one = server_l
     # print(one)
     
     zone = one["zone"]
@@ -1369,8 +1374,9 @@ async def main():
     accounts = userinfo["accounts"]
     accounts = [acc for acc in accounts if acc.get("account") != "xxx"]
     webinfo = load_config(get_user_info("webInfo.json"))
-    ismainfun = True # 刷亲密度测试（未完善）
+    ismainfun = False # 刷亲密度测试（未完善）
     sametimeloginnumber = 5
+    server_l = {}
     # 限制最多 60 个
     if len(accounts) > 60:
         accounts = accounts[:60]
@@ -1383,6 +1389,10 @@ async def main():
         return
     
     if not ismainfun:
+        # print(accounts[0])
+        print("正在随机寻找服务器")
+        server_l = await run_one_account(accounts[0], userinfo["mainaccount"], webinfo["url"], webinfo["path"], headers, ismainfun, {}, True)
+        print(f"服务器：{server_l}")
         sametimeloginnumber = 25 # 同时登录账号数
     
     # 并发上限（相当于 max_workers=10）
@@ -1390,7 +1400,7 @@ async def main():
 
     async def sem_run(acc):
         async with sem:
-            await run_one_account(acc, userinfo["mainaccount"], webinfo["url"], webinfo["path"], headers, ismainfun)
+            await run_one_account(acc, userinfo["mainaccount"], webinfo["url"], webinfo["path"], headers, ismainfun, server_l)
 
     tasks = [asyncio.create_task(sem_run(acc)) for acc in accounts]
     await asyncio.gather(*tasks)
