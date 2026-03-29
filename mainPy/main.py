@@ -351,45 +351,37 @@ class FlashClientAsync:
             "param": {'ci': 2}
         }))
         await asyncio.sleep(t) # 登录1钻石+15
+        print("领取每日钻石")
 
+        # ---------移除资源秘境每日竞猜，兑换金币------------
+        # 替换为领红钻（活跃度+15）
         await self.send_bytes(send.sendXtMessage(-1, {
-            "id": 1008,
-            "cmd": "1008_20250613_nzymj5",
-            "param": {'an': 1, 'ty': 0}
+            "id": 88,
+            "cmd": "88_66_2_3",
+            "param": {'ci': 2}
         }))
-        await asyncio.sleep(t) # 每日竞猜一次+30(新版-简单)
+        await asyncio.sleep(t) # 领红钻50（默认普通用户）
+        print("领取红钻")
+
+        # 领每周金币5w（确保金币足够供应每日任务）
         await self.send_bytes(send.sendXtMessage(-1, {
-            "id": 1008,
-            "cmd": "1008_20250613_nzymj5",
-            "param": {'an': 1}
+            "id": 88,
+            "cmd": "88_66_3_1",
+            "param": {'id': 0, 'ci': 2}
         }))
-        await asyncio.sleep(t) # 每日竞猜一次+30（不知道还有没有用，先留着）
+        await asyncio.sleep(t) # 领每周金币5w（默认普通用户）
+        print("领取每周金币（默认都是普通用户）")
+
+        # 猎星（+15活跃）
         await self.send_bytes(send.sendXtMessage(-1, {
-            "id": 1008,
-            "cmd": "1008_20250613_nzymj1",
-            "param": {}
+            "id": 2,
+            "cmd": "2_4_B",
+            "param": {'c': 3, 'mi': 1}
         }))
-        await asyncio.sleep(t) # 每日竞猜
-        for _ in range(15):
-            await self.send_bytes(send.sendXtMessage(-1, {
-                "id": 1008,
-                "cmd": "1008_20250613_nzymj2",
-                "param": {'i': 1, 'l': '0'}
-            }))
-            await asyncio.sleep(t) # 每日竞猜
-        await self.send_bytes(send.sendXtMessage(-1, {
-            "id": 1008,
-            "cmd": "1008_20250613_nzymj3",
-            "param": {'p': False}
-        }))
-        await asyncio.sleep(t) # 每日竞猜
-        await self.send_bytes(send.sendXtMessage(-1, {
-            "id": 1019,
-            "cmd": "1019_1",
-            "param": {'ci': 2, 'ai': 4852, 'bi': 9}
-        }))
-        await asyncio.sleep(t) # 每日竞猜换金币
-        
+        await asyncio.sleep(t) # 猎星（一次消耗150金币）
+        print("每日猎星")
+        # -------------------------------------------------
+
         await self.send_bytes(send.sendXtMessage(-1, {
             "id": 1008,
             "cmd": "1008_20190531_gbt_4",
