@@ -26,6 +26,8 @@
 - [x] [亲密度-打招呼](#亲密度-打招呼)
 - [ ] 亲密度-同场景5min
 
+## 视频演示：
+[b站](https://www.bilibili.com/video/BV1ecPjzhE1x/?spm_id_from=333.1387.homepage.video_card.click)
 ## 控制台输出演示：
 
 ![image](https://github.com/YuZi-isNOOB/aqcs-helper/blob/main/img/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202026-02-25%20182151.png)
