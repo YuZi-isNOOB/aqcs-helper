@@ -291,11 +291,13 @@ class FlashClientAsync:
 
     async def alliance_daily(self, send, delay = 0.3):
         t = random.uniform(delay, 1.5)
+        # 忘记注释了，应该是联盟报到
         await self.send_bytes(send.sendXtMessage(-1, {
             "id": 1015, "cmd": "1015_1_2",
             "param": {'ci': 2}
         }))
         await asyncio.sleep(t)
+        # -----------------
         count = 0
         while count < 3:
             # 摇吉：发送并接收（防止花钻石）
@@ -320,7 +322,7 @@ class FlashClientAsync:
             }))
             print("ok")
             await asyncio.sleep(t)
-        # 转轮
+        # 转轮 (官方移除)
         for _ in range(5):
             await self.send_bytes(send.sendXtMessage(-1, {
                 "id": 1016, "cmd": "1016_6_4",
@@ -343,6 +345,28 @@ class FlashClientAsync:
             "param": {'ec': 1, 'ci': 2, 'gid': 18}
         }))
         await asyncio.sleep(t)
+        # 新增联盟每周签到领宝箱（每周4个）
+        print("领取每周联盟报到宝箱")
+        for i in range(4):
+            await self.send_bytes(send.sendXtMessage(-1, {
+                "id": 1015, "cmd": "1015_1_4",
+                "param": {'pi': i, 'ci': 2}
+            }))
+            await asyncio.sleep(t)
+        # 联盟每周5钻石更新
+        print("领取联盟每周5钻石")
+        await self.send_bytes(send.sendXtMessage(-1, {
+            "id": 1008, "cmd": "1008_20260313_es_1",
+            "param": {'esi': 6, 'n': 1, 'bi': 5, 'ci': 2}
+        }))
+        await asyncio.sleep(t)
+        # print("测试领取邮箱")
+        # await self.send_bytes(send.sendXtMessage(-1, {
+        #     "id": 12, "cmd": "12_0",
+        #     "param": {'array': [30126, 1, 40686, 1, 29774, 1]}
+        # }))
+        # await asyncio.sleep(t)
+
     async def daily(self, send, account, delay = 0.3):
         t = random.uniform(delay, 1.5)
         await self.send_bytes(send.sendXtMessage(-1, {
